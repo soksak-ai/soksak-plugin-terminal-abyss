@@ -20,6 +20,7 @@ describe("presenter factory", () => {
     expect(root.querySelector('[data-node="terminal-screen"]')).not.toBeNull();
     expect(root.querySelector('[data-node="terminal-input"]')).not.toBeNull();
     expect(presenter.renderer()).toBe("dom");
+    expect(root.dataset.renderer).toBe("dom");
     expect(typeof presenter.applyFrame).toBe("function");
     expect(typeof presenter.read).toBe("function");
     presenter.dispose();
