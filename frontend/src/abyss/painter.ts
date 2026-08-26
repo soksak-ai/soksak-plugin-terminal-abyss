@@ -97,7 +97,9 @@ export class CanvasPainter implements Painter {
   setFont(metrics: FontMetrics): void { this.metrics = metrics; this.resize(this.cols, this.rows); }
   setDevicePixelRatio(dpr: number): void { this.dpr = dpr; this.resize(this.cols, this.rows); }
   setCursorStyle(style: AbyssCursorStyle): void { this.cursorStyle = style; }
-  dispose(): void {}
+  // A canvas holds its drawing buffer for as long as it has a size, whether or not anything still
+  // points at it. Emptying it is what gives that memory back.
+  dispose(): void { release(this.canvas); }
 
   render(source: FrameSource, forceAll: boolean, view: PainterView, focused: boolean, extra: RenderExtra = {}): void {
     const { rows, cols } = this;
@@ -251,6 +253,12 @@ const INSTANCE_BYTES = FLOATS_PER_INSTANCE * 4;
 interface AtlasEntry { x: number; y: number; w: number; h: number }
 interface AtlasKey { text: string; bold: boolean; italic: boolean; cells: number }
 
+// release empties a canvas so its drawing buffer is not held by a surface nothing paints on.
+function release(canvas: HTMLCanvasElement): void {
+  canvas.width = 0;
+  canvas.height = 0;
+}
+
 class GlyphAtlas {
   canvas: HTMLCanvasElement;
   size: number;
@@ -291,6 +299,12 @@ class GlyphAtlas {
     this.keys.push({ text, bold, italic, cells });
     this.dirty = true;
     return entry;
+  }
+
+  dispose(): void {
+    this.entries.clear();
+    this.keys = [];
+    release(this.canvas);
   }
 
   private contextOf(canvas: HTMLCanvasElement, size: number): CanvasRenderingContext2D {
@@ -426,6 +440,11 @@ export class WebglPainter implements Painter {
     gl.deleteTexture(this.texture);
     gl.deleteVertexArray(this.vao);
     gl.deleteProgram(this.program);
+    // Deleting the objects is not giving up the context: the context keeps a drawing buffer of its
+    // own until it is lost, and both canvases keep theirs until they are emptied.
+    this.atlas.dispose();
+    (gl.getExtension("WEBGL_lose_context") as { loseContext(): void } | null)?.loseContext();
+    release(this.canvas);
   }
 
   render(source: FrameSource, forceAll: boolean, view: PainterView, focused: boolean, extra: RenderExtra = {}): void {

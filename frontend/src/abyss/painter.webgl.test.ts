@@ -83,3 +83,28 @@ describe("shader precision", () => {
     }
   });
 });
+
+// A painter that is disposed leaves nothing holding a drawing buffer: the GL context is given up
+// and every canvas it owns is emptied, so the pane costs nothing once it is closed.
+describe("disposing a painter", () => {
+  it("gives up the context and empties the canvases it owns", () => {
+    const { canvas, painter, gl } = setup();
+    const atlas = painter.debug();
+    expect(atlas.atlasSize).toBeGreaterThan(0);
+    painter.dispose();
+    expect(callsNamed(gl, "deleteProgram").length).toBe(1);
+    expect(callsNamed(gl, "getExtension").some((call) => call.args[0] === "WEBGL_lose_context")).toBe(true);
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+  });
+
+  it("empties the canvas of a 2d painter too", () => {
+    const canvas = document.createElement("canvas");
+    const painter = createPainter("canvas", canvas, { metrics, theme, devicePixelRatio: 1, cursorStyle: "block" });
+    painter.resize(4, 4);
+    expect(canvas.width).toBeGreaterThan(0);
+    painter.dispose();
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+  });
+});
