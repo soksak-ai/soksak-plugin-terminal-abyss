@@ -8,9 +8,16 @@ presenter; an open pane keeps its renderer.
 - `dom`: the factory returns the kit's own frame presenter (`createProviderFramePresenter`), so the
   pane is the kit's DOM surface with the same `terminal-screen[/suffix]` and
   `terminal-input[/suffix]` nodes. No abyss module runs for that pane.
-- `canvas`: the abyss pane with `CanvasPainter`.
-- `webgl` (default): the abyss pane with `WebglPainter`; a lost WebGL context, or a failed context
-  or shader setup, swaps the pane to `CanvasPainter` on a fresh canvas element.
+- `canvas` (default): the abyss pane with `CanvasPainter`.
+- `webgl`: the abyss pane with `WebglPainter`; a lost WebGL context, or a failed context or shader
+  setup, swaps the pane to `CanvasPainter` on a fresh canvas element. A canvas keeps the first kind
+  of context it is given, so the replacement is a new canvas and the reason is published on the
+  pane's root as `data-renderer-refusal`.
+
+Canvas 2D is the default because a WebGL pane holds a rendering context of its own: measured
+2026-08-26, a WebGL pane cost 20.2 MB against a Canvas 2D pane's 9.2 MB, and with six panes open
+Canvas 2D applied 10 MiB of output in 1337 ms against WebGL's 4577 ms. WebGL is the faster of the
+two for a single pane on an idle host, which is why it stays a setting.
 
 ## Frame model
 
@@ -38,7 +45,10 @@ rows lazily through an epoch.
   by the device pixel ratio and the context transform is set once per resize.
 - `WebglPainter` keeps one instance buffer per row (`x y w h`, background RGBA, foreground RGBA,
   atlas uv) and re-uploads only dirty rows. Glyphs are rasterized on demand into a 2D atlas canvas
-  that doubles when full and is uploaded as one texture. Two instanced passes draw backgrounds and
+  that doubles when full and is uploaded as one texture. One atlas serves every pane drawing the
+  same font at the same scale — the pixels are the same — and each painter uploads it into its own
+  texture when the atlas states a generation it has not uploaded. Disposing a painter gives up the
+  GL context and empties both canvases; a canvas holds its drawing buffer until it is emptied. Two instanced passes draw backgrounds and
   glyphs. `webglcontextlost` calls `onFallback`, and the pane swaps to `CanvasPainter` on a fresh
   canvas element.
 
