@@ -2,7 +2,7 @@ import { defaultModes, type AbyssFrame, type AbyssLine, type AbyssModes, type Ab
 import { createColorCache } from "./palette";
 
 export const FLAG = Object.freeze({ BOLD: 1, DIM: 2, ITALIC: 4, UNDERLINE: 8, INVERSE: 16, STRIKE: 32, HIDDEN: 64 });
-export const ROW_CACHE_CAP = 10000;
+export const ROW_CACHE_CAP = 2048;
 export const EXPANDED_CELL_CACHE_CAP = 4096;
 
 export interface Cell { cp: number; text: string; fg: RGB; bg: RGB; flags: number; width: 0 | 1 | 2; link: string | null }

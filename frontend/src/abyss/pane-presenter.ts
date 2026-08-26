@@ -1,5 +1,5 @@
 import { decodeFrame } from "./frame-decode";
-import { EXPANDED_CELL_CACHE_CAP, createFrameSource } from "./frame-source";
+import { EXPANDED_CELL_CACHE_CAP, ROW_CACHE_CAP, createFrameSource } from "./frame-source";
 import { fontCss, measureFont, type FontMetrics } from "./font-metrics";
 import type { AbyssHost, AbyssRenderer, AbyssTheme } from "./host";
 import { bindInput } from "./input";
@@ -97,6 +97,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     root.dataset.cacheExpandedEntries = String(cache.expandedCells);
   };
   root.dataset.cacheEntryLimit = String(EXPANDED_CELL_CACHE_CAP);
+  root.dataset.cacheRowLimit = String(ROW_CACHE_CAP);
   syncCacheDataset();
   let cols = 0;
   let rows = 0;
