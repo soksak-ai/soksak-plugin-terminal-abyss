@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { frameFixture, lineFixture, themeFixture } from "./fixtures";
-import { FLAG, createFrameSource } from "./frame-source";
+import { EXPANDED_CELL_CACHE_CAP, FLAG, createFrameSource } from "./frame-source";
 
 const theme = themeFixture();
 const text = (cells: readonly { text: string }[]) => cells.map((cell) => cell.text).join("");
@@ -64,6 +64,21 @@ describe("frame source", () => {
     const source = createFrameSource(() => theme);
     expect(source.applyFrame(frameFixture({ full: false }))).toEqual({ applied: false, requestFull: true, resized: false });
     expect(source.getDimensions()).toEqual({ cols: 0, rows: 0 });
+  });
+  it("keeps compressed history while expanded cells stay inside one fixed budget", () => {
+    const source = createFrameSource(() => theme);
+    for (let index = 0; index < 100; index += 1) {
+      source.applyFrame(frameFixture({
+        cols: 80, rows: 1, historySize: index, outputSequence: index + 1, full: index === 0,
+        lines: [lineFixture(0, String(index % 10).repeat(80))],
+      }));
+      source.getLine(0);
+    }
+
+    expect(source.cacheStats()).toMatchObject({ storedRows: 100 });
+    expect(source.cacheStats().expandedCells).toBeLessThanOrEqual(EXPANDED_CELL_CACHE_CAP);
+    expect(source.getScrollbackLine(0)?.[0].text).toBe("0");
+    expect(source.cacheStats().expandedCells).toBeLessThanOrEqual(EXPANDED_CELL_CACHE_CAP);
   });
 });
 
