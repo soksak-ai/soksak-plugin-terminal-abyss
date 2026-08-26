@@ -10,7 +10,10 @@ viewport, paint scheduler. `frontend/src/abyss`는 자기 밖의 어떤 것도 i
 `docs/RENDERING.md`에 있습니다.
 
 설정: `engine`(기본 alacritty); `renderer`는 세 값 `dom`(kit 자체 DOM presenter), `canvas`,
-`webgl`(기본, 컨텍스트를 잃으면 `canvas`로 내려감)이며 pane 생성 시 한 번 읽습니다; `fontSize`(기본 13).
+`webgl`(컨텍스트를 잃으면 `canvas`로 내려감)이며 기본은 `canvas`, pane 생성 시 한 번 읽습니다;
+`fontSize`(기본 13). WebGL pane 은 자기 렌더링 컨텍스트를 들고 있어 2026-08-26 실측으로 pane 당 20.2 MB,
+Canvas 2D 는 9.2 MB 였고, pane 6개에서 10 MiB 출력 적용이 각각 4577 ms 와 1337 ms 였습니다. pane 하나만
+띄운 유휴 상태에서는 WebGL 이 더 빠르므로 설정으로 남깁니다.
 글꼴은 host의 `--mono` 변수에서 읽고 없으면 `Menlo, monospace`를 씁니다.
 
 ## 검증

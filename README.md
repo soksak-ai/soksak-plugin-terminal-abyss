@@ -10,8 +10,11 @@ scheduler. `frontend/src/abyss` imports nothing outside itself; `frontend/src/ho
 application and the kit to it. See `docs/RENDERING.md` for the frame model and measurement rules.
 
 Settings: `engine` (default alacritty); `renderer` with three values, `dom` (the kit's own DOM
-presenter), `canvas`, and `webgl` (default, falls back to `canvas` when the context is lost), read
-once per pane; `fontSize` (default 13). Font family comes from the host `--mono` variable, falling
+presenter), `canvas` (default) and `webgl` (falls back to `canvas` when the context is lost), read
+once per pane; `fontSize` (default 13). A WebGL pane holds a rendering context of its own: measured
+2026-08-26 it cost 20.2 MB against a Canvas 2D pane's 9.2 MB, and with six panes open Canvas 2D
+applied 10 MiB of output in 1337 ms against WebGL's 4577 ms. WebGL is faster for a single pane on an
+idle host, which is why it stays a setting. Font family comes from the host `--mono` variable, falling
 back to `Menlo, monospace`.
 
 ## Verification
