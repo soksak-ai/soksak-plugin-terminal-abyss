@@ -1,5 +1,6 @@
 import { createProviderFramePresenter, type ProviderFramePresenter } from "@soksak/soksak-kit-plugin-terminal";
 import type { AbyssHost, AbyssPresentation } from "../abyss/host";
+import { createAtlasPool } from "../abyss/painter";
 import { createPanePresenter, type PanePresenter } from "../abyss/pane-presenter";
 import { readAbyssSettings, readRendererSetting, type RendererSetting, type SettingsReader } from "./settings";
 import { bindAbyssThemeSurface, observeAbyssTheme, readAbyssTheme } from "./theme";
@@ -72,10 +73,14 @@ export function createDomPresenter(root: HTMLElement, send: (text: string) => vo
 
 // The renderer is read once per pane at creation; an open pane keeps it.
 export function createAbyssPresenter(app: AbyssApp): AbyssPresenterFactory {
+  // One atlas per font and scale, for every pane this plugin paints: the glyphs are the same pixels,
+  // and a second atlas is a second canvas and a second texture holding them again.
+  const atlases = createAtlasPool(() => document.createElement("canvas"));
   return (root, send, context = {}) => {
     if (readRendererSetting(app.settings) === "dom") return createDomPresenter(root, send, context);
     return createPanePresenter({
       root, send, host: createAbyssHost(app, root, context), nodeSuffix: context.nodeSuffix ?? null,
+      atlases,
     });
   };
 }

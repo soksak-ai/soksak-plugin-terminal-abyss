@@ -21,6 +21,9 @@ export interface PainterOptions {
   onFallback?: (reason: string) => void;
   createCanvas?: () => HTMLCanvasElement;
   atlasSize?: number;
+  // A glyph atlas the caller owns. Panes drawing the same font in the same scale rasterize the same
+  // glyphs, and one atlas is one canvas and one set of pixels for all of them.
+  atlas?: GlyphAtlas;
 }
 export interface Painter {
   readonly canvas: HTMLCanvasElement;
@@ -259,10 +262,13 @@ function release(canvas: HTMLCanvasElement): void {
   canvas.height = 0;
 }
 
-class GlyphAtlas {
+export class GlyphAtlas {
   canvas: HTMLCanvasElement;
   size: number;
   dirty = false;
+  // generation counts what has been rasterized into this atlas. A painter uploads when the number
+  // it last uploaded differs, so one atlas can serve painters that each hold their own texture.
+  generation = 0;
   private context: CanvasRenderingContext2D;
   private entries = new Map<string, AtlasEntry>();
   private keys: AtlasKey[] = [];
@@ -298,6 +304,7 @@ class GlyphAtlas {
     this.entries.set(key, entry);
     this.keys.push({ text, bold, italic, cells });
     this.dirty = true;
+    this.generation += 1;
     return entry;
   }
 
@@ -353,6 +360,8 @@ interface RowBuffer { buffer: WebGLBuffer; count: number }
 export class WebglPainter implements Painter {
   readonly kind: AbyssRenderer = "webgl";
   private readonly gl: WebGL2RenderingContext;
+  private readonly ownsAtlas: boolean = true;
+  private uploadedGeneration = -1;
   private readonly program: WebGLProgram;
   private readonly vao: WebGLVertexArrayObject;
   private readonly texture: WebGLTexture;
@@ -385,7 +394,8 @@ export class WebglPainter implements Painter {
     this.cursorStyle = options.cursorStyle;
     this.selection = options.selection ?? null;
     const createCanvas = options.createCanvas ?? (() => canvas.ownerDocument.createElement("canvas"));
-    this.atlas = new GlyphAtlas(options.atlasSize ?? 1024, options.metrics, this.dpr, createCanvas);
+    this.atlas = options.atlas ?? new GlyphAtlas(options.atlasSize ?? 1024, options.metrics, this.dpr, createCanvas);
+    this.ownsAtlas = options.atlas === undefined;
     this.program = this.link();
     const vao = gl.createVertexArray();
     const texture = gl.createTexture();
@@ -427,8 +437,16 @@ export class WebglPainter implements Painter {
     this.lastCursorRow = -1;
   }
   setTheme(theme: AbyssTheme): void { this.theme = theme; this.background = parseCssColor(theme.background); }
-  setFont(metrics: FontMetrics): void { this.metrics = metrics; this.atlas.reset(metrics, this.dpr); this.resize(this.cols, this.rows); }
-  setDevicePixelRatio(dpr: number): void { this.dpr = dpr; this.atlas.reset(this.metrics, dpr); this.resize(this.cols, this.rows); }
+  setFont(metrics: FontMetrics): void {
+    this.metrics = metrics;
+    if (this.ownsAtlas) this.atlas.reset(metrics, this.dpr);
+    this.resize(this.cols, this.rows);
+  }
+  setDevicePixelRatio(dpr: number): void {
+    this.dpr = dpr;
+    if (this.ownsAtlas) this.atlas.reset(this.metrics, dpr);
+    this.resize(this.cols, this.rows);
+  }
   setCursorStyle(style: AbyssCursorStyle): void { this.cursorStyle = style; }
 
   dispose(): void {
@@ -442,7 +460,7 @@ export class WebglPainter implements Painter {
     gl.deleteProgram(this.program);
     // Deleting the objects is not giving up the context: the context keeps a drawing buffer of its
     // own until it is lost, and both canvases keep theirs until they are emptied.
-    this.atlas.dispose();
+    if (this.ownsAtlas) this.atlas.dispose();
     (gl.getExtension("WEBGL_lose_context") as { loseContext(): void } | null)?.loseContext();
     release(this.canvas);
   }
@@ -462,10 +480,11 @@ export class WebglPainter implements Painter {
       gl.bufferData(gl.ARRAY_BUFFER, overlay, gl.DYNAMIC_DRAW);
       this.overlay.count = overlay.length / FLOATS_PER_INSTANCE;
     }
-    if (this.atlas.dirty) {
+    if (this.atlas.generation !== this.uploadedGeneration) {
       gl.bindTexture(gl.TEXTURE_2D, this.texture);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.atlas.canvas);
+      this.uploadedGeneration = this.atlas.generation;
       this.atlas.dirty = false;
       this.uploads += 1;
     }
@@ -635,4 +654,41 @@ export function createPainter(kind: AbyssRenderer, canvas: HTMLCanvasElement, op
     catch (reason) { options.onFallback?.(reason instanceof Error ? reason.message : String(reason)); }
   }
   return new CanvasPainter(canvas, options);
+}
+
+// An atlas pool hands one atlas to every painter drawing the same font at the same scale, and keeps
+// it until the last of them lets go.
+export interface AtlasPool {
+  acquire(metrics: FontMetrics, devicePixelRatio: number, size?: number): GlyphAtlas;
+  release(atlas: GlyphAtlas): void;
+}
+
+export function createAtlasPool(createCanvas: () => HTMLCanvasElement): AtlasPool {
+  const held = new Map<string, { atlas: GlyphAtlas; users: number }>();
+  const keyOf = (metrics: FontMetrics, dpr: number) =>
+    `${metrics.fontFamily}|${metrics.fontSize}|${metrics.width}|${metrics.height}|${metrics.baseline}|${dpr}`;
+  return {
+    acquire(metrics, devicePixelRatio, size = 1024) {
+      const key = keyOf(metrics, devicePixelRatio);
+      const entry = held.get(key);
+      if (entry) {
+        entry.users += 1;
+        return entry.atlas;
+      }
+      const atlas = new GlyphAtlas(size, metrics, devicePixelRatio, createCanvas);
+      held.set(key, { atlas, users: 1 });
+      return atlas;
+    },
+    release(atlas) {
+      for (const [key, entry] of held) {
+        if (entry.atlas !== atlas) continue;
+        entry.users -= 1;
+        if (entry.users <= 0) {
+          entry.atlas.dispose();
+          held.delete(key);
+        }
+        return;
+      }
+    },
+  };
 }

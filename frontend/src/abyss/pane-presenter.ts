@@ -4,7 +4,7 @@ import { measureFont, type FontMetrics } from "./font-metrics";
 import type { AbyssHost, AbyssRenderer, AbyssTheme } from "./host";
 import { bindInput } from "./input";
 import { createLinks } from "./links";
-import { createPainter, type Painter } from "./painter";
+import { createPainter, type AtlasPool, type GlyphAtlas, type Painter } from "./painter";
 import { createPaintScheduler } from "./paint-scheduler";
 import { createSelection } from "./selection";
 import { createViewport } from "./viewport";
@@ -15,6 +15,8 @@ export interface PanePresenterOptions {
   host: AbyssHost;
   nodeSuffix?: string | null;
   createCanvas?: () => HTMLCanvasElement;
+  // The glyph atlas every pane in this plugin draws from. Panes that share a font share its pixels.
+  atlases?: AtlasPool;
   createResizeObserver?: (callback: () => void) => { observe(element: Element): void; disconnect(): void } | null;
 }
 export interface PanePresenter {
@@ -115,8 +117,20 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
 
   let building = true;
   let refusal = "";
+  const atlases = options.atlases ?? null;
+  let atlas: GlyphAtlas | null = null;
+  const heldAtlas = () => {
+    if (!atlases) return undefined;
+    if (!atlas) atlas = atlases.acquire(metrics, dpr);
+    return atlas;
+  };
+  const releaseAtlas = () => {
+    if (atlases && atlas) atlases.release(atlas);
+    atlas = null;
+  };
   const painterOptions = () => ({
     metrics, theme, devicePixelRatio: dpr, cursorStyle: settings.cursorStyle, selection, createCanvas,
+    atlas: heldAtlas(),
     onFallback: (reason?: string) => { if (reason) refusal = refusal || reason; if (!building) fallback(); },
   });
   let painter: Painter = buildPainter();
@@ -301,6 +315,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
       selection.dispose();
       links.dispose();
       painter.dispose();
+      releaseAtlas();
       input.removeEventListener("focus", onFocusChange);
       input.removeEventListener("blur", onFocusChange);
       renderedListeners.clear();

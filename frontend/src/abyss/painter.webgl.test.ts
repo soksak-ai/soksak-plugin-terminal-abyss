@@ -3,7 +3,7 @@ import { callsNamed } from "../testEnvironment";
 import { frameFixture, lineFixture, themeFixture } from "./fixtures";
 import { createFrameSource } from "./frame-source";
 import { measureFont } from "./font-metrics";
-import { FRAGMENT_SHADER, VERTEX_SHADER, WebglPainter, createPainter } from "./painter";
+import { FRAGMENT_SHADER, VERTEX_SHADER, WebglPainter, createAtlasPool, createPainter } from "./painter";
 
 const theme = themeFixture();
 const metrics = measureFont({ fontFamily: "monospace", fontSize: 13, lineHeight: 1.2 }, 1);
@@ -106,5 +106,42 @@ describe("disposing a painter", () => {
     painter.dispose();
     expect(canvas.width).toBe(0);
     expect(canvas.height).toBe(0);
+  });
+});
+
+// Every pane draws the same glyphs in the same font. One atlas serves them all: a second atlas is a
+// second canvas and a second texture's worth of memory for pixels that are already rasterized.
+describe("the glyph atlas", () => {
+  it("is shared by painters that draw the same font, and each uploads what it holds", () => {
+    const pool = createAtlasPool(() => document.createElement("canvas"));
+    const first = pool.acquire(metrics, 1);
+    const second = pool.acquire(metrics, 1);
+    expect(second.canvas).toBe(first.canvas);
+
+    const other = pool.acquire({ ...metrics, height: metrics.height + 1 }, 1);
+    expect(other.canvas).not.toBe(first.canvas);
+
+    pool.release(first);
+    expect(pool.acquire(metrics, 1).canvas).toBe(first.canvas);
+  });
+
+  it("paints two panes from one atlas and uploads it into each", () => {
+    const pool = createAtlasPool(() => document.createElement("canvas"));
+    const shared = pool.acquire(metrics, 1);
+    const source = createFrameSource(() => theme);
+    source.applyFrame(frameFixture({ cols: 4, rows: 4, lines: [0, 1, 2, 3].map((y) => lineFixture(y, "A")) }));
+
+    const canvases = [document.createElement("canvas"), document.createElement("canvas")];
+    const painters = canvases.map((canvas) => new WebglPainter(canvas, {
+      metrics, theme, devicePixelRatio: 1, cursorStyle: "block", atlas: shared,
+    }));
+    for (const painter of painters) { painter.resize(4, 4); painter.render(source, true, view, false); }
+    for (const canvas of canvases) {
+      const gl = canvas.getContext("webgl2") as object;
+      expect(callsNamed(gl, "texImage2D").length).toBe(1);
+    }
+    // The shared atlas outlives the painters that drew from it.
+    for (const painter of painters) painter.dispose();
+    expect(shared.canvas.width).toBeGreaterThan(0);
   });
 });
