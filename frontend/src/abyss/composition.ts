@@ -37,7 +37,8 @@ export function attachComposition(input: HTMLTextAreaElement, options: Compositi
   };
   const onEnd = (event: Event) => {
     composing = false;
-    const data = (event as CompositionEvent).data ?? input.value;
+    // macOS may leave the commit only in the textarea while compositionend.data is empty.
+    const data = (event as CompositionEvent).data || input.value;
     options.preedit?.("");
     clear();
     if (data) { lastComposed = { text: data, at: options.now() }; options.emit(data); }
