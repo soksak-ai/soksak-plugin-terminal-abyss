@@ -1,0 +1,391 @@
+{
+  "id": "soksak-plugin-terminal-abyss",
+  "name": {
+    "en": "Abyss Terminal",
+    "ko": "Abyss \ud130\ubbf8\ub110"
+  },
+  "version": "0.0.1",
+  "appVersionRequirement": "0.0.1",
+  "description": {
+    "en": "A terminal view that paints engine-authoritative screen frames on a canvas.",
+    "ko": "\uc5d4\uc9c4\uc774 \uacb0\uc815\ud55c \ud654\uba74 \ud504\ub808\uc784\uc744 \uce94\ubc84\uc2a4\uc5d0 \uadf8\ub9ac\ub294 \ud130\ubbf8\ub110 \ubdf0."
+  },
+  "entry": "main.js",
+  "permissions": [
+    "ui",
+    "ui:statusbar",
+    "commands",
+    "programs",
+    "sidecar",
+    "secrets",
+    "terminal",
+    "clipboard:write"
+  ],
+  "implements": [
+    {
+      "id": "soksak-spec-plugin-terminal",
+      "version": "0.0.8"
+    }
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "name": "status",
+        "title": {
+          "en": "Terminal status",
+          "ko": "\ud130\ubbf8\ub110 \uc0c1\ud0dc"
+        }
+      },
+      {
+        "name": "wait",
+        "title": {
+          "en": "Wait for terminal phase",
+          "ko": "\ud130\ubbf8\ub110 \ub2e8\uacc4 \ub300\uae30"
+        }
+      },
+      {
+        "name": "archive",
+        "title": {
+          "en": "Archive terminal state",
+          "ko": "\ud130\ubbf8\ub110 \uc0c1\ud0dc \ubcf4\uad00"
+        }
+      },
+      {
+        "name": "send",
+        "title": {
+          "en": "Send input",
+          "ko": "\uc785\ub825 \ubcf4\ub0b4\uae30"
+        },
+        "danger": "inject"
+      },
+      {
+        "name": "read",
+        "title": {
+          "en": "Read the screen",
+          "ko": "\ud654\uba74 \uc77d\uae30"
+        }
+      },
+      {
+        "name": "clear",
+        "title": {
+          "en": "Clear terminal",
+          "ko": "\ud130\ubbf8\ub110 \uc9c0\uc6b0\uae30"
+        }
+      },
+      {
+        "name": "focus",
+        "title": {
+          "en": "Focus terminal",
+          "ko": "\ud130\ubbf8\ub110 \ud3ec\ucee4\uc2a4"
+        }
+      },
+      {
+        "name": "recovery-status",
+        "title": {
+          "en": "Terminal recovery status",
+          "ko": "\ud130\ubbf8\ub110 \ubcf5\uc6d0 \uc0c1\ud0dc"
+        }
+      },
+      {
+        "name": "split",
+        "title": {
+          "en": "Split the terminal",
+          "ko": "\ud130\ubbf8\ub110 \ubd84\ud560"
+        }
+      },
+      {
+        "name": "pane.close",
+        "title": {
+          "en": "Close a pane",
+          "ko": "pane \ub2eb\uae30"
+        }
+      },
+      {
+        "name": "pane.focus",
+        "title": {
+          "en": "Focus a pane",
+          "ko": "pane \ud3ec\ucee4\uc2a4"
+        }
+      },
+      {
+        "name": "pane.list",
+        "title": {
+          "en": "List panes",
+          "ko": "pane \ubaa9\ub85d"
+        }
+      },
+      {
+        "name": "pane.resize",
+        "title": {
+          "en": "Resize a pane",
+          "ko": "pane \ud06c\uae30 \uc870\uc808"
+        }
+      },
+      {
+        "name": "pane.equalize",
+        "title": {
+          "en": "Equalize the panes",
+          "ko": "pane \uade0\ub4f1\ud654"
+        }
+      },
+      {
+        "name": "pane.maximize",
+        "title": {
+          "en": "Maximize a pane",
+          "ko": "pane \ucd5c\ub300\ud654"
+        }
+      },
+      {
+        "name": "pane.broadcast",
+        "title": {
+          "en": "Broadcast input to every pane",
+          "ko": "\ubaa8\ub4e0 pane\uc5d0 \uc785\ub825 \uc804\ub2ec"
+        }
+      },
+      {
+        "name": "pane.title",
+        "title": {
+          "en": "Set a pane title",
+          "ko": "pane \uc81c\ubaa9 \uc124\uc815"
+        }
+      },
+      {
+        "name": "scroll",
+        "title": {
+          "en": "Scroll the screen",
+          "ko": "\ud654\uba74 \uc2a4\ud06c\ub864"
+        }
+      },
+      {
+        "name": "selection",
+        "title": {
+          "en": "Read or copy the selection",
+          "ko": "\uc120\ud0dd \uc77d\uae30\u00b7\ubcf5\uc0ac"
+        }
+      },
+      {
+        "name": "input.compose",
+        "title": {
+          "en": "Compose input text",
+          "ko": "\uc785\ub825 \ud14d\uc2a4\ud2b8 \uc870\ud569"
+        },
+        "danger": "inject"
+      },
+      {
+        "name": "exec",
+        "title": {
+          "en": "Run a command",
+          "ko": "\uba85\ub839 \uc2e4\ud589"
+        },
+        "danger": "inject"
+      },
+      {
+        "name": "cwd",
+        "title": {
+          "en": "Working directory",
+          "ko": "\uc791\uc5c5 \ub514\ub809\ud130\ub9ac"
+        }
+      }
+    ],
+    "nodes": [
+      {
+        "id": "terminal-root",
+        "description": {
+          "en": "The terminal root",
+          "ko": "\ud130\ubbf8\ub110 \ub8e8\ud2b8"
+        }
+      },
+      {
+        "id": "terminal-screen",
+        "description": {
+          "en": "The terminal screen",
+          "ko": "\ud130\ubbf8\ub110 \ud654\uba74"
+        }
+      },
+      {
+        "id": "terminal-input",
+        "description": {
+          "en": "The terminal input",
+          "ko": "\ud130\ubbf8\ub110 \uc785\ub825"
+        }
+      },
+      {
+        "id": "terminal-restore-status",
+        "description": {
+          "en": "The terminal recovery state",
+          "ko": "\ud130\ubbf8\ub110 \ubcf5\uc6d0 \uc0c1\ud0dc"
+        }
+      },
+      {
+        "id": "pane",
+        "description": {
+          "en": "One terminal pane",
+          "ko": "\ud130\ubbf8\ub110 pane \ud558\ub098"
+        }
+      },
+      {
+        "id": "gutter",
+        "description": {
+          "en": "The strip between two panes",
+          "ko": "\ub450 pane \uc0ac\uc774\uc758 \ub760"
+        }
+      }
+    ],
+    "programs": [
+      {
+        "id": "terminal-abyss",
+        "title": {
+          "en": "Abyss Terminal",
+          "ko": "Abyss \ud130\ubbf8\ub110"
+        },
+        "kind": "view",
+        "view": "content"
+      }
+    ],
+    "views": [
+      {
+        "id": "content",
+        "title": {
+          "en": "Abyss Terminal",
+          "ko": "Abyss \ud130\ubbf8\ub110"
+        },
+        "icon": ">_",
+        "surfaces": [
+          "tab"
+        ],
+        "status": [
+          "connecting",
+          "error"
+        ]
+      }
+    ]
+  },
+  "configuration": [
+    {
+      "key": "engine",
+      "type": "enum",
+      "enum": [
+        "alacritty",
+        "ghostty",
+        "kitty",
+        "shitty",
+        "vt100",
+        "wezterm"
+      ],
+      "enumLabels": [
+        {
+          "en": "Alacritty",
+          "ko": "Alacritty"
+        },
+        {
+          "en": "Ghostty",
+          "ko": "Ghostty"
+        },
+        {
+          "en": "kitty",
+          "ko": "kitty"
+        },
+        {
+          "en": "shitty",
+          "ko": "shitty"
+        },
+        {
+          "en": "VT100",
+          "ko": "VT100"
+        },
+        {
+          "en": "WezTerm",
+          "ko": "WezTerm"
+        }
+      ],
+      "default": "alacritty",
+      "title": {
+        "en": "Terminal engine",
+        "ko": "\ud130\ubbf8\ub110 \uc5d4\uc9c4"
+      },
+      "description": {
+        "en": "The engine Sidecar a new terminal pane runs on. An open pane keeps its engine.",
+        "ko": "\uc0c8 \ud130\ubbf8\ub110 pane\uc774 \uc0ac\uc6a9\ud558\ub294 \uc5d4\uc9c4 Sidecar. \uc774\ubbf8 \uc5f4\ub9b0 pane\uc740 \uc5d4\uc9c4\uc744 \uc720\uc9c0\ud569\ub2c8\ub2e4."
+      }
+    },
+    {
+      "key": "renderer",
+      "type": "enum",
+      "enum": [
+        "dom",
+        "canvas",
+        "webgl"
+      ],
+      "enumLabels": [
+        {
+          "en": "DOM (kit presenter)",
+          "ko": "DOM (kit presenter)"
+        },
+        {
+          "en": "Canvas 2D",
+          "ko": "Canvas 2D"
+        },
+        {
+          "en": "WebGL",
+          "ko": "WebGL"
+        }
+      ],
+      "default": "webgl",
+      "title": {
+        "en": "Renderer",
+        "ko": "\ub80c\ub354\ub7ec"
+      },
+      "description": {
+        "en": "How a new pane is painted: the kit's DOM presenter, Canvas 2D, or WebGL (falls back to Canvas 2D when the context is lost). An open pane keeps its renderer.",
+        "ko": "\uc0c8 pane\uc744 \uadf8\ub9ac\ub294 \ubc29\uc2dd: kit\uc758 DOM presenter, Canvas 2D, \ub610\ub294 WebGL(\ucee8\ud14d\uc2a4\ud2b8\ub97c \uc783\uc73c\uba74 Canvas 2D\ub85c \ub0b4\ub824\uac10). \uc774\ubbf8 \uc5f4\ub9b0 pane\uc740 \ub80c\ub354\ub7ec\ub97c \uc720\uc9c0\ud569\ub2c8\ub2e4."
+      }
+    },
+    {
+      "key": "fontSize",
+      "type": "number",
+      "default": 13,
+      "min": 8,
+      "max": 40,
+      "title": {
+        "en": "Font size",
+        "ko": "\uae00\uaf34 \ud06c\uae30"
+      },
+      "description": {
+        "en": "Font size in CSS pixels.",
+        "ko": "CSS \ud53d\uc140 \ub2e8\uc704 \uae00\uaf34 \ud06c\uae30."
+      }
+    }
+  ],
+  "runtimeDependencies": {
+    "sidecars": [
+      {
+        "id": "soksak-sidecar-pty",
+        "version": "0.0.9"
+      },
+      {
+        "id": "soksak-sidecar-terminal-alacritty",
+        "version": "0.0.15"
+      },
+      {
+        "id": "soksak-sidecar-terminal-ghostty",
+        "version": "0.0.15"
+      },
+      {
+        "id": "soksak-sidecar-terminal-kitty",
+        "version": "0.0.10"
+      },
+      {
+        "id": "soksak-sidecar-terminal-shitty",
+        "version": "0.0.10"
+      },
+      {
+        "id": "soksak-sidecar-terminal-vt100",
+        "version": "0.0.14"
+      },
+      {
+        "id": "soksak-sidecar-terminal-wezterm",
+        "version": "0.0.14"
+      }
+    ]
+  }
+}
