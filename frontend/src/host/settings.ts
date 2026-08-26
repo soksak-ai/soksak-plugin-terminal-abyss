@@ -27,6 +27,8 @@ export function readAbyssSettings(settings: SettingsReader | undefined, root: HT
     cursorBlink: true,
     optionAsMeta: true,
     scrollLines: 3,
-    renderer: readRendererSetting(settings) === "canvas" ? "canvas" : "webgl",
+    // The abyss pane paints on one of two surfaces. Anything that is not WebGL is Canvas 2D — the
+    // DOM setting never reaches this pane at all.
+    renderer: readRendererSetting(settings) === "webgl" ? "webgl" : "canvas",
   };
 }
