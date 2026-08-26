@@ -211,8 +211,9 @@ export class CanvasPainter implements Painter {
   }
 }
 
-const VERTEX_SHADER = `#version 300 es
+export const VERTEX_SHADER = `#version 300 es
 precision highp float;
+precision highp int;
 layout(location=0) in vec4 aRect;
 layout(location=1) in vec4 aBg;
 layout(location=2) in vec4 aFg;
@@ -230,8 +231,9 @@ void main() {
   vColor = uPass == 0 ? aBg : aFg;
 }`;
 
-const FRAGMENT_SHADER = `#version 300 es
+export const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
+precision highp int;
 uniform sampler2D uAtlas;
 uniform int uPass;
 in vec2 vUv;

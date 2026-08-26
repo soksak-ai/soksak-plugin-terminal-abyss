@@ -3,7 +3,7 @@ import { callsNamed } from "../testEnvironment";
 import { frameFixture, lineFixture, themeFixture } from "./fixtures";
 import { createFrameSource } from "./frame-source";
 import { measureFont } from "./font-metrics";
-import { WebglPainter, createPainter } from "./painter";
+import { FRAGMENT_SHADER, VERTEX_SHADER, WebglPainter, createPainter } from "./painter";
 
 const theme = themeFixture();
 const metrics = measureFont({ fontFamily: "monospace", fontSize: 13, lineHeight: 1.2 }, 1);
@@ -52,5 +52,34 @@ describe("webgl painter", () => {
     expect(second.glyphs).toBe(5);
     expect(second.atlasSize).toBeGreaterThanOrEqual(first.atlasSize);
     expect(callsNamed(gl, "texImage2D")).toHaveLength(2);
+  });
+});
+
+// A uniform a program links has one precision. The vertex stage defaults an int to highp and the
+// fragment stage to mediump, so a shared uniform that leans on the default links in neither.
+describe("shader precision", () => {
+  const declared = (source: string) =>
+    new Map([...source.matchAll(/uniform\s+(?:(highp|mediump|lowp)\s+)?(\w+)\s+(\w+)\s*;/g)]
+      .map((match) => [match[3], { precision: match[1], type: match[2] }] as const));
+  const defaults = (source: string) =>
+    new Map([...source.matchAll(/precision\s+(highp|mediump|lowp)\s+(\w+)\s*;/g)]
+      .map((match) => [match[2], match[1]] as const));
+
+  it("gives every shared uniform the same stated precision in both stages", () => {
+    const vertex = declared(VERTEX_SHADER);
+    const fragment = declared(FRAGMENT_SHADER);
+    const vertexDefaults = defaults(VERTEX_SHADER);
+    const fragmentDefaults = defaults(FRAGMENT_SHADER);
+    const shared = [...vertex.keys()].filter((name) => fragment.has(name));
+    expect(shared.length).toBeGreaterThan(0);
+    for (const name of shared) {
+      const inVertex = vertex.get(name)!;
+      const inFragment = fragment.get(name)!;
+      const vertexPrecision = inVertex.precision ?? vertexDefaults.get(inVertex.type);
+      const fragmentPrecision = inFragment.precision ?? fragmentDefaults.get(inFragment.type);
+      expect(vertexPrecision, `${name} has no stated precision in the vertex stage`).toBeDefined();
+      expect(fragmentPrecision, `${name} has no stated precision in the fragment stage`).toBeDefined();
+      expect(fragmentPrecision, `${name} differs between the stages`).toBe(vertexPrecision);
+    }
   });
 });
