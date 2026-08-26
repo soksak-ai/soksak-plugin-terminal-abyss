@@ -27,6 +27,8 @@ describe("pane presenter", () => {
     const presenter = createPanePresenter({ root: rootFixture(), send: vi.fn(), host: hostFixture(true), createResizeObserver: () => null });
     expect(presenter.fit()).toEqual({ cols: 100, rows: 10 });
     expect(presenter.measure()).toEqual({ cols: 100, rows: 10 });
+    expect(presenter.metrics().cellWidth).toBeGreaterThan(0);
+    expect(presenter.metrics().cellHeight).toBeGreaterThan(0);
     expect(presenter.size()).toEqual({ cols: 0, rows: 0 });
     presenter.applyFrame(frameFixture({ cols: 100, rows: 10, lines: [lineFixture(0, "ready")] }));
     expect(presenter.size()).toEqual({ cols: 100, rows: 10 });
