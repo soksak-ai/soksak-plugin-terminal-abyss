@@ -87,4 +87,16 @@ describe("composition", () => {
     ibusCommit("글");
     expect(emit.mock.calls.map(([value]) => value)).toEqual(["한", "a", "b", "c", "글"]);
   });
+  it("commits the textarea value when macOS ends composition with empty event data", () => {
+    const { input, emit, preedit } = setup();
+    input.dispatchEvent(new CompositionEvent("compositionstart", { data: "" }));
+    input.value = "한";
+    input.dispatchEvent(new CompositionEvent("compositionupdate", { data: "한" }));
+    input.dispatchEvent(new CompositionEvent("compositionend", { data: "" }));
+
+    expect(emit).toHaveBeenCalledOnce();
+    expect(emit).toHaveBeenCalledWith("한");
+    expect(preedit).toHaveBeenLastCalledWith("");
+    expect(input.value).toBe("");
+  });
 });
