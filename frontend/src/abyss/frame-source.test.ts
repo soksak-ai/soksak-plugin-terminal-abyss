@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { frameFixture, lineFixture, themeFixture } from "./fixtures";
-import { EXPANDED_CELL_CACHE_CAP, FLAG, createFrameSource } from "./frame-source";
+import { EXPANDED_CELL_CACHE_CAP, FLAG, ROW_CACHE_CAP, createFrameSource } from "./frame-source";
 
 const theme = themeFixture();
 const text = (cells: readonly { text: string }[]) => cells.map((cell) => cell.text).join("");
@@ -79,6 +79,19 @@ describe("frame source", () => {
     expect(source.cacheStats().expandedCells).toBeLessThanOrEqual(EXPANDED_CELL_CACHE_CAP);
     expect(source.getScrollbackLine(0)?.[0].text).toBe("0");
     expect(source.cacheStats().expandedCells).toBeLessThanOrEqual(EXPANDED_CELL_CACHE_CAP);
+  });
+  it("bounds compressed history independently of terminal output volume", () => {
+    const source = createFrameSource(() => theme);
+    for (let index = 0; index < 2200; index += 1) {
+      source.applyFrame(frameFixture({
+        cols: 1, rows: 1, historySize: index, outputSequence: index + 1, full: index === 0,
+        lines: [lineFixture(0, "x")],
+      }));
+    }
+
+    expect(ROW_CACHE_CAP).toBe(2048);
+    expect(source.cacheStats().storedRows).toBeLessThanOrEqual(ROW_CACHE_CAP);
+    expect(source.getScrollbackLine(0)).toBeNull();
   });
 });
 

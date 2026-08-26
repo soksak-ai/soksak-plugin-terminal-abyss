@@ -43,6 +43,7 @@ describe("pane presenter", () => {
     presenter.applyFrame(frameFixture({ cols: 100, rows: 10, historySize: 4, lines: [lineFixture(0, "ready")] }));
 
     expect(presenter.root.dataset.cacheStoredRows).toBe("1");
+    expect(presenter.root.dataset.cacheRowLimit).toBe("2048");
     expect(Number(presenter.root.dataset.cacheExpandedRows)).toBeGreaterThanOrEqual(0);
     expect(Number(presenter.root.dataset.cacheExpandedEntries)).toBeLessThanOrEqual(4096);
     expect(presenter.root.dataset.cacheEntryLimit).toBe("4096");
