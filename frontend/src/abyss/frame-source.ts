@@ -151,9 +151,11 @@ export function createFrameSource(theme: () => AbyssTheme): FrameSource {
       return inViewport(abs) ? " ".repeat(cols) : "";
     },
     rowText: (y) => textOf(rowCells(absOf(y)) ?? blank()),
+    // Reading answers what the pane shows: the last row is the one at the bottom of the viewport, so
+    // a pane scrolled into history reads that history.
     read(lines) {
       const out: string[] = [];
-      const last = historySize + rows - 1;
+      const last = historySize - offset + rows - 1;
       for (let abs = 0; abs <= last; abs += 1) {
         const cells = rowCells(abs);
         if (cells) out.push(textOf(cells));

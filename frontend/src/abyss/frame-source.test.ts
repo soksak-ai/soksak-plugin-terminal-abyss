@@ -66,3 +66,21 @@ describe("frame source", () => {
     expect(source.getDimensions()).toEqual({ cols: 0, rows: 0 });
   });
 });
+
+// Reading answers what the pane shows. A pane scrolled into history reads that history, which is
+// what makes scroll-then-read a way to read the scrollback.
+describe("reading a scrolled source", () => {
+  it("ends at the bottom of the viewport, not at the bottom of the buffer", () => {
+    const source = createFrameSource(() => themeFixture());
+    source.applyFrame(frameFixture({
+      cols: 8, rows: 2, historySize: 10, offset: 0,
+      lines: [lineFixture(0, "bottom-a"), lineFixture(1, "bottom-b")],
+    }));
+    expect(source.read(1)).toBe("bottom-b");
+    source.applyFrame(frameFixture({
+      cols: 8, rows: 2, historySize: 10, offset: 4, outputSequence: 2,
+      lines: [lineFixture(0, "older-a"), lineFixture(1, "older-b")],
+    }));
+    expect(source.read(1)).toBe("older-b");
+  });
+});
