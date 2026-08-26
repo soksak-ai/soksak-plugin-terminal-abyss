@@ -118,4 +118,17 @@ describe("a driven composition", () => {
     expect(emitted).toBe(1);
     presenter.dispose();
   });
+  it("shows a resumed Korean preedit at the cursor and hides it after commit", () => {
+    const presenter = createPanePresenter({ root: rootFixture(), send: vi.fn(), host: hostFixture(true), createResizeObserver: () => null });
+    presenter.applyFrame(frameFixture({ cols: 100, rows: 10, cursor: [2, 3], cursorVisible: true }));
+    presenter.input.dispatchEvent(new CompositionEvent("compositionupdate", { data: "한" }));
+    const preedit = presenter.root.querySelector<HTMLElement>('[data-node="terminal-ime-preedit"]');
+    expect(preedit).not.toBeNull();
+    expect(preedit).toMatchObject({ hidden: false, textContent: "한" });
+    expect(preedit?.style.left).not.toBe("");
+    expect(preedit?.style.top).not.toBe("");
+    presenter.input.dispatchEvent(new CompositionEvent("compositionend", { data: "한" }));
+    expect(preedit?.hidden).toBe(true);
+    presenter.dispose();
+  });
 });
