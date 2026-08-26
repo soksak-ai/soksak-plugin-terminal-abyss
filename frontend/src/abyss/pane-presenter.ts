@@ -1,5 +1,5 @@
 import { decodeFrame } from "./frame-decode";
-import { createFrameSource } from "./frame-source";
+import { EXPANDED_CELL_CACHE_CAP, createFrameSource } from "./frame-source";
 import { fontCss, measureFont, type FontMetrics } from "./font-metrics";
 import type { AbyssHost, AbyssRenderer, AbyssTheme } from "./host";
 import { bindInput } from "./input";
@@ -89,6 +89,14 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
   root.append(canvas, input, preedit);
 
   const source = createFrameSource(() => theme);
+  const syncCacheDataset = () => {
+    const cache = source.cacheStats();
+    root.dataset.cacheStoredRows = String(cache.storedRows);
+    root.dataset.cacheExpandedRows = String(cache.expandedRows);
+    root.dataset.cacheExpandedCells = String(cache.expandedCells);
+  };
+  root.dataset.cacheExpandedCellCap = String(EXPANDED_CELL_CACHE_CAP);
+  syncCacheDataset();
   let cols = 0;
   let rows = 0;
   let measured = { cols: 0, rows: 0 };
@@ -201,6 +209,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     painter.render(source, forceAll, { offset: source.getOffset(), historySize: source.getScrollbackLength() }, focused(), {
       cursorOn: !settings.cursorBlink || blinkOn, link: links.current(),
     });
+    syncCacheDataset();
     renderSequence += 1;
     canvas.dataset.renderSequence = String(renderSequence);
     const duration = Math.max(0, host.now() - started);
@@ -279,6 +288,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     root.dataset.rows = String(rows);
     root.dataset.offset = String(frame.offset);
     root.dataset.historySize = String(frame.historySize);
+    syncCacheDataset();
     syncCursorDataset();
     blinkOn = true;
     scheduler.request();
