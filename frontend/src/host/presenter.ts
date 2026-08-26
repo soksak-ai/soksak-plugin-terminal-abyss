@@ -62,6 +62,7 @@ export function createAbyssHost(app: AbyssApp, root: HTMLElement, context: Prese
 
 export function createDomPresenter(root: HTMLElement, send: (text: string) => void, context: PresenterContext = {}): DomPresenter {
   const presenter = (createProviderFramePresenter as unknown as KitPresenterFactory)(root, send, { nodeSuffix: context.nodeSuffix ?? null });
+  root.dataset.renderer = "dom";
   const render = (frame: unknown) => presenter.render(frame as Parameters<ProviderFramePresenter["render"]>[0]);
   return {
     ...presenter,
