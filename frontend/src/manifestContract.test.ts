@@ -18,7 +18,7 @@ describe("terminal plugin manifest contract", () => {
     for (const sidecar of manifest.runtimeDependencies.sidecars) expect(sidecar).toEqual({ id: expect.stringMatching(/^soksak-sidecar-[a-z0-9-]+$/), version: expect.stringMatching(/^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/) });
     const setting = (key: string) => manifest.configuration.find((item: { key: string }) => item.key === key);
     expect(setting("engine")).toMatchObject({ type: "enum", enum: engines, default: "alacritty" });
-    expect(setting("renderer")).toMatchObject({ type: "enum", enum: ["dom", "canvas", "webgl"], default: "webgl" });
+    expect(setting("renderer")).toMatchObject({ type: "enum", enum: ["dom", "canvas", "webgl"], default: "canvas" });
     expect(setting("renderer").enumLabels).toHaveLength(3);
     expect(setting("fontSize")).toMatchObject({ type: "number", default: 13 });
     expect(validateTerminalPluginManifestCommands(manifest.contributes.commands)).toEqual([]);

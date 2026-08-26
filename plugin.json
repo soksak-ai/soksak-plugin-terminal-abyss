@@ -330,7 +330,7 @@
           "ko": "WebGL"
         }
       ],
-      "default": "webgl",
+      "default": "canvas",
       "title": {
         "en": "Renderer",
         "ko": "\ub80c\ub354\ub7ec"

@@ -4,7 +4,10 @@ export interface SettingsReader { get(key: string): unknown }
 
 export type RendererSetting = "dom" | "canvas" | "webgl";
 export const RENDERER_SETTINGS: readonly RendererSetting[] = ["dom", "canvas", "webgl"];
-export const DEFAULT_RENDERER: RendererSetting = "webgl";
+// Measured: a WebGL pane costs 20.2 MB against a Canvas 2D pane's 9.2 MB, because each pane holds a
+// context of its own, and with six panes open Canvas 2D applied 10 MiB in 1337 ms against WebGL's
+// 4577 ms. WebGL is faster with one pane on an idle machine, which is why it stays a setting.
+export const DEFAULT_RENDERER: RendererSetting = "canvas";
 export const DEFAULT_FONT_FAMILY = "Menlo, monospace";
 
 export function readRendererSetting(settings: SettingsReader | undefined): RendererSetting {

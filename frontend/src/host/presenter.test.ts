@@ -29,8 +29,8 @@ describe("presenter factory", () => {
     expect(canvas.root.querySelector("canvas")).not.toBeNull();
     expect(canvas.renderer()).toBe("canvas");
     canvas.dispose();
-    expect(readRendererSetting(undefined)).toBe("webgl");
-    expect(readRendererSetting(appWith({ renderer: "nope" }).settings)).toBe("webgl");
-    expect(readAbyssSettings(appWith({ renderer: "dom", fontSize: 15 }).settings, document.body)).toMatchObject({ renderer: "webgl", fontSize: 15, fontFamily: "Menlo, monospace" });
+    expect(readRendererSetting(undefined)).toBe("canvas");
+    expect(readRendererSetting(appWith({ renderer: "nope" }).settings)).toBe("canvas");
+    expect(readAbyssSettings(appWith({ renderer: "dom", fontSize: 15 }).settings, document.body)).toMatchObject({ renderer: "canvas", fontSize: 15, fontFamily: "Menlo, monospace" });
   });
 });
