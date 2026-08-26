@@ -1,5 +1,6 @@
 export interface CompositionOptions {
   emit(text: string): void;
+  preedit?(text: string): void;
   bracketedPaste(): boolean;
   now(): number;
   lastKeydown(): { text: string; at: number } | null;
@@ -30,9 +31,14 @@ export function attachComposition(input: HTMLTextAreaElement, options: Compositi
   const window = options.dedupeWindowMs ?? 100;
   const clear = () => { input.value = ""; };
   const onStart = () => { composing = true; };
+  const onUpdate = (event: Event) => {
+    composing = true;
+    options.preedit?.((event as CompositionEvent).data ?? input.value);
+  };
   const onEnd = (event: Event) => {
     composing = false;
     const data = (event as CompositionEvent).data ?? input.value;
+    options.preedit?.("");
     clear();
     if (data) { lastComposed = { text: data, at: options.now() }; options.emit(data); }
   };
@@ -56,6 +62,7 @@ export function attachComposition(input: HTMLTextAreaElement, options: Compositi
     if (text) options.emit(bracketPaste(text, options.bracketedPaste()));
   };
   input.addEventListener("compositionstart", onStart);
+  input.addEventListener("compositionupdate", onUpdate);
   input.addEventListener("compositionend", onEnd);
   input.addEventListener("input", onInput);
   input.addEventListener("beforeinput", onBeforeInput);
@@ -86,10 +93,12 @@ export function attachComposition(input: HTMLTextAreaElement, options: Compositi
     },
     dispose() {
       input.removeEventListener("compositionstart", onStart);
+      input.removeEventListener("compositionupdate", onUpdate);
       input.removeEventListener("compositionend", onEnd);
       input.removeEventListener("input", onInput);
       input.removeEventListener("beforeinput", onBeforeInput);
       input.removeEventListener("paste", onPaste);
+      options.preedit?.("");
     },
   };
 }

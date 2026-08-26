@@ -21,6 +21,7 @@ export interface InputOptions {
   links: LinksController;
   now(): number;
   onActivity?(): void;
+  onPreedit?(text: string): void;
 }
 export interface InputBinding {
   accept(text: string): void;
@@ -48,7 +49,7 @@ export function bindInput(options: InputOptions): InputBinding {
   const tracking = () => { const m = options.modes(); return m.mouseClick || m.mouseDrag || m.mouseMotion; };
   const mods = (event: MouseEvent) => ({ shift: event.shiftKey, alt: event.altKey, ctrl: event.ctrlKey });
   const composition = attachComposition(input, {
-    emit: accept, bracketedPaste: () => options.modes().bracketedPaste, now: options.now, lastKeydown: () => lastKeydown,
+    emit: accept, preedit: options.onPreedit, bracketedPaste: () => options.modes().bracketedPaste, now: options.now, lastKeydown: () => lastKeydown,
   });
 
   const onKeydown = (event: KeyboardEvent) => {

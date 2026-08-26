@@ -1,6 +1,6 @@
 import { decodeFrame } from "./frame-decode";
 import { createFrameSource } from "./frame-source";
-import { measureFont, type FontMetrics } from "./font-metrics";
+import { fontCss, measureFont, type FontMetrics } from "./font-metrics";
 import type { AbyssHost, AbyssRenderer, AbyssTheme } from "./host";
 import { bindInput } from "./input";
 import { createLinks } from "./links";
@@ -80,13 +80,20 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
   input.setAttribute("aria-label", "Terminal input");
   input.autocapitalize = "off"; input.autocomplete = "off"; input.spellcheck = false;
   Object.assign(input.style, { position: "absolute", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", margin: "0", padding: "0", border: "0", resize: "none" });
-  root.append(canvas, input);
+  const preedit = document.createElement("span");
+  preedit.dataset.node = nodeName("terminal-ime-preedit");
+  preedit.hidden = true;
+  Object.assign(preedit.style, {
+    position: "absolute", pointerEvents: "none", whiteSpace: "pre", zIndex: "2",
+  });
+  root.append(canvas, input, preedit);
 
   const source = createFrameSource(() => theme);
   let cols = 0;
   let rows = 0;
   let measured = { cols: 0, rows: 0 };
   let renderSequence = 0;
+  let preeditText = "";
   let blinkOn = true;
   let blinkTimer: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
@@ -94,6 +101,21 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
   const textListeners = new Set<(text: string) => void>();
   const focused = () => document.activeElement === input;
   const view = () => ({ offset: source.getOffset(), historySize: source.getScrollbackLength(), rows, cols });
+  const placePreedit = (text: string) => {
+    preeditText = text;
+    preedit.textContent = text;
+    preedit.hidden = text === "";
+    if (!text) return;
+    const [row, col] = source.getCursor();
+    preedit.style.left = `${col * metrics.width}px`;
+    preedit.style.top = `${row * metrics.height}px`;
+    preedit.style.minWidth = `${Math.max(metrics.width, Array.from(text).length * metrics.width)}px`;
+    preedit.style.height = `${metrics.height}px`;
+    preedit.style.lineHeight = `${metrics.height}px`;
+    preedit.style.font = fontCss(metrics, false, false);
+    preedit.style.color = theme.foreground;
+    preedit.style.backgroundColor = theme.background;
+  };
 
   const selection = createSelection({
     surface: () => canvas, document,
@@ -193,6 +215,11 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     canvas.dataset.cursorActive = String(visible && focused());
     canvas.dataset.altActive = String(source.isAltActive());
     input.dataset.focused = String(focused());
+    input.style.left = `${cursor[1] * metrics.width}px`;
+    input.style.top = `${cursor[0] * metrics.height}px`;
+    input.style.width = `${metrics.width}px`;
+    input.style.height = `${metrics.height}px`;
+    if (preeditText) placePreedit(preeditText);
   }
   const stopBlink = () => { if (blinkTimer !== null) clearInterval(blinkTimer); blinkTimer = null; blinkOn = true; };
   const startBlink = () => {
@@ -214,6 +241,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     cell: () => ({ width: metrics.width, height: metrics.height }), rows: () => rows,
     viewport, selection, links, now: () => host.now(),
     onActivity: () => { blinkOn = true; },
+    onPreedit: placePreedit,
   });
 
   const fit = () => {
@@ -322,6 +350,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
       textListeners.clear();
       canvas.remove();
       input.remove();
+      preedit.remove();
     },
   };
 }
