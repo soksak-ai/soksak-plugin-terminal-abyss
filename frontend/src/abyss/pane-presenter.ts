@@ -27,6 +27,7 @@ export interface PanePresenter {
   renderFrame(frame: unknown): void;
   fit(): { cols: number; rows: number };
   measure(): { cols: number; rows: number };
+  metrics(): { cellWidth: number; cellHeight: number };
   size(): { cols: number; rows: number };
   read(lines?: number): string;
   rowText(y: number): string;
@@ -304,6 +305,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     renderFrame: (frame) => { applyFrame(frame); },
     fit,
     measure: fit,
+    metrics: () => ({ cellWidth: metrics.width, cellHeight: metrics.height }),
     size: () => ({ cols, rows }),
     read: (lines) => source.read(lines),
     rowText: (y) => source.rowText(y),
