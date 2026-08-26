@@ -68,6 +68,10 @@ if (typeof HTMLCanvasElement !== "undefined") {
   HTMLCanvasElement.prototype.getContext = function getContext(this: HTMLCanvasElement, kind: string): unknown {
     let held = contexts.get(this);
     if (!held) { held = {}; contexts.set(this, held); }
+    // A canvas keeps the first kind of context it is given, as a browser's does: asking for another
+    // kind afterwards answers null.
+    const taken = Object.keys(held)[0];
+    if (taken && taken !== kind) return null;
     if (kind === "2d") return held["2d"] ??= create2d(this);
     if (kind === "webgl2") return held.webgl2 ??= createWebgl2(this);
     return null;

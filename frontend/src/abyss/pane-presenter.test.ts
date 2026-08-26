@@ -71,3 +71,38 @@ describe("pane presenter", () => {
     expect(root.querySelector("canvas")).toBeNull();
   });
 });
+
+describe("a renderer that fails after taking its context", () => {
+  // A canvas keeps the first kind of context it is given. A WebGL painter that took its context and
+  // then failed leaves a canvas the 2d painter cannot use, so the pane paints on one of its own and
+  // states why it stopped asking for WebGL.
+  it("paints on a canvas of its own and states the refusal", () => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    const broken = new WeakSet<HTMLCanvasElement>();
+    let first = true;
+    HTMLCanvasElement.prototype.getContext = function getContext(this: HTMLCanvasElement, kind: string, ...rest: unknown[]): unknown {
+      if (kind === "webgl2") {
+        if (!first) return null;
+        first = false;
+        broken.add(this);
+        const context = (original as (this: HTMLCanvasElement, k: string) => unknown).call(this, "webgl2") as Record<string, unknown>;
+        return { ...context, createVertexArray: () => null };
+      }
+      if (kind === "2d" && broken.has(this)) return null;
+      return (original as (this: HTMLCanvasElement, k: string, ...a: unknown[]) => unknown).call(this, kind, ...rest);
+    } as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const host = { ...hostFixture(true), settings: { ...hostFixture(true).settings, renderer: "webgl" as const } };
+      const root = rootFixture();
+      const presenter = createPanePresenter({ root, send: vi.fn(), host, createResizeObserver: () => null });
+      expect(presenter.renderer()).toBe("canvas");
+      expect(root.dataset.renderer).toBe("canvas");
+      expect(root.dataset.rendererRefusal ?? "").not.toBe("");
+      presenter.applyFrame(frameFixture({ cols: 100, rows: 10, lines: [lineFixture(0, "ready")] }));
+      expect(presenter.rowText(0)).toBe("ready");
+      presenter.dispose();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = original;
+    }
+  });
+});

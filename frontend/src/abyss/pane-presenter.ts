@@ -113,13 +113,26 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     scrollLines: () => settings.scrollLines,
   });
 
+  let building = true;
+  let refusal = "";
   const painterOptions = () => ({
     metrics, theme, devicePixelRatio: dpr, cursorStyle: settings.cursorStyle, selection, createCanvas,
-    onFallback: () => fallback(),
+    onFallback: (reason?: string) => { if (reason) refusal = refusal || reason; if (!building) fallback(); },
   });
-  let painter: Painter = createPainter(settings.renderer, canvas, painterOptions());
-  if (painter.kind !== settings.renderer && !canvas.getContext("2d")) { painter = swapCanvas("canvas"); }
+  let painter: Painter = buildPainter();
+  building = false;
   root.dataset.renderer = painter.kind;
+  if (refusal) root.dataset.rendererRefusal = refusal;
+
+  // The first painter is built on the canvas already in the pane. A renderer that refuses leaves that
+  // canvas spent, so the 2d painter gets one of its own.
+  function buildPainter(): Painter {
+    try { return createPainter(settings.renderer, canvas, painterOptions()); }
+    catch (reason) {
+      refusal = refusal || (reason instanceof Error ? reason.message : String(reason));
+      return swapCanvas("canvas");
+    }
+  }
 
   function swapCanvas(kind: AbyssRenderer): Painter {
     const next = createCanvas();
@@ -133,10 +146,11 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     return created;
   }
   function fallback(): void {
-    if (disposed || painter.kind === "canvas") return;
+    if (disposed || building || painter.kind === "canvas") return;
     painter.dispose();
     painter = swapCanvas("canvas");
     root.dataset.renderer = painter.kind;
+    if (refusal) root.dataset.rendererRefusal = refusal;
     source.markAllDirty();
     scheduler.request();
   }

@@ -607,9 +607,13 @@ export class WebglPainter implements Painter {
   }
 }
 
+// A canvas keeps the first kind of context it is given. A WebGL painter that took its context and
+// then failed leaves a canvas the 2d painter cannot use, so the reason travels to the caller, which
+// owns where the replacement canvas goes.
 export function createPainter(kind: AbyssRenderer, canvas: HTMLCanvasElement, options: PainterOptions): Painter {
   if (kind === "webgl") {
-    try { return new WebglPainter(canvas, options); } catch { /* falls through to the 2d painter */ }
+    try { return new WebglPainter(canvas, options); }
+    catch (reason) { options.onFallback?.(reason instanceof Error ? reason.message : String(reason)); }
   }
   return new CanvasPainter(canvas, options);
 }
