@@ -36,6 +36,16 @@ describe("pane presenter", () => {
     expect(presenter.renderer()).toBe("canvas");
     presenter.dispose();
   });
+  it("publishes the renderer cache budget on the exposed pane root", () => {
+    const presenter = createPanePresenter({ root: rootFixture(), send: vi.fn(), host: hostFixture(true), createResizeObserver: () => null });
+    presenter.applyFrame(frameFixture({ cols: 100, rows: 10, historySize: 4, lines: [lineFixture(0, "ready")] }));
+
+    expect(presenter.root.dataset.cacheStoredRows).toBe("1");
+    expect(Number(presenter.root.dataset.cacheExpandedRows)).toBeGreaterThanOrEqual(0);
+    expect(Number(presenter.root.dataset.cacheExpandedCells)).toBeLessThanOrEqual(4096);
+    expect(presenter.root.dataset.cacheExpandedCellCap).toBe("4096");
+    presenter.dispose();
+  });
   it("advances the render sequence through a timer when no animation frame runs", () => {
     vi.useFakeTimers();
     const raf = vi.spyOn(window, "requestAnimationFrame");
