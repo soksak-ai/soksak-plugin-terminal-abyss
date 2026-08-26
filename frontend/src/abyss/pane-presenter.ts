@@ -57,7 +57,7 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
   let dpr = host.devicePixelRatio();
   let metrics: FontMetrics = measureFont(settings, dpr, createCanvas);
 
-  if (!root.dataset.node) root.dataset.node = "terminal-root";
+  root.dataset.node = nodeName("terminal-root");
   if (!root.style.position) root.style.position = "relative";
   root.style.overflow = "hidden";
   root.dataset.cols = "0"; root.dataset.rows = "0"; root.dataset.offset = "0"; root.dataset.historySize = "0";
