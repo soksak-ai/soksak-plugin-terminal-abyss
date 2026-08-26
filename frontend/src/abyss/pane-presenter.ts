@@ -93,9 +93,9 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     const cache = source.cacheStats();
     root.dataset.cacheStoredRows = String(cache.storedRows);
     root.dataset.cacheExpandedRows = String(cache.expandedRows);
-    root.dataset.cacheExpandedCells = String(cache.expandedCells);
+    root.dataset.cacheExpandedEntries = String(cache.expandedCells);
   };
-  root.dataset.cacheExpandedCellCap = String(EXPANDED_CELL_CACHE_CAP);
+  root.dataset.cacheEntryLimit = String(EXPANDED_CELL_CACHE_CAP);
   syncCacheDataset();
   let cols = 0;
   let rows = 0;

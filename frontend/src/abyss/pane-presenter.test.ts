@@ -42,8 +42,8 @@ describe("pane presenter", () => {
 
     expect(presenter.root.dataset.cacheStoredRows).toBe("1");
     expect(Number(presenter.root.dataset.cacheExpandedRows)).toBeGreaterThanOrEqual(0);
-    expect(Number(presenter.root.dataset.cacheExpandedCells)).toBeLessThanOrEqual(4096);
-    expect(presenter.root.dataset.cacheExpandedCellCap).toBe("4096");
+    expect(Number(presenter.root.dataset.cacheExpandedEntries)).toBeLessThanOrEqual(4096);
+    expect(presenter.root.dataset.cacheEntryLimit).toBe("4096");
     presenter.dispose();
   });
   it("advances the render sequence through a timer when no animation frame runs", () => {
