@@ -22,7 +22,15 @@ export interface InputOptions {
   now(): number;
   onActivity?(): void;
 }
-export interface InputBinding { accept(text: string): void; acceptedInputSequence(): number; paste(text: string): void; dispose(): void }
+export interface InputBinding {
+  accept(text: string): void;
+  acceptedInputSequence(): number;
+  paste(text: string): void;
+  update(text: string): void;
+  commit(text: string): void;
+  cancelComposition(): void;
+  dispose(): void;
+}
 
 export function bindInput(options: InputOptions): InputBinding {
   const { root, input } = options;
@@ -130,6 +138,9 @@ export function bindInput(options: InputOptions): InputBinding {
     accept,
     acceptedInputSequence: () => sequence,
     paste: (text) => composition.paste(text),
+    update: (text) => composition.update(text),
+    commit: (text) => composition.commit(text),
+    cancelComposition: () => composition.cancel(),
     dispose() {
       composition.dispose();
       input.removeEventListener("keydown", onKeydown);

@@ -5,7 +5,15 @@ export interface CompositionOptions {
   lastKeydown(): { text: string; at: number } | null;
   dedupeWindowMs?: number;
 }
-export interface CompositionBinding { dispose(): void; isComposing(): boolean; paste(text: string): void }
+export interface CompositionBinding {
+  dispose(): void;
+  isComposing(): boolean;
+  paste(text: string): void;
+  // Drives the input element the way a keyboard does, for a caller that has no keyboard.
+  update(text: string): void;
+  commit(text: string): void;
+  cancel(): void;
+}
 
 export function isCompositionKeydown(event: { keyCode?: number; isComposing?: boolean; key?: string }): boolean {
   return event.keyCode === 229 || event.isComposing === true || event.key === "Process";
@@ -52,9 +60,30 @@ export function attachComposition(input: HTMLTextAreaElement, options: Compositi
   input.addEventListener("input", onInput);
   input.addEventListener("beforeinput", onBeforeInput);
   input.addEventListener("paste", onPaste);
+  const fire = (type: string, data: string) => {
+    const event = input.ownerDocument.defaultView
+      ? new (input.ownerDocument.defaultView as unknown as { CompositionEvent: typeof CompositionEvent }).CompositionEvent(type, { data })
+      : new CompositionEvent(type, { data });
+    input.dispatchEvent(event);
+  };
   return {
     isComposing: () => composing,
     paste(text) { if (text) options.emit(bracketPaste(text, options.bracketedPaste())); },
+    update(text) {
+      if (!composing) fire("compositionstart", "");
+      input.value = text;
+      fire("compositionupdate", text);
+    },
+    commit(text) {
+      if (!composing) fire("compositionstart", "");
+      input.value = text;
+      fire("compositionend", text);
+    },
+    cancel() {
+      if (!composing) return;
+      input.value = "";
+      fire("compositionend", "");
+    },
     dispose() {
       input.removeEventListener("compositionstart", onStart);
       input.removeEventListener("compositionend", onEnd);

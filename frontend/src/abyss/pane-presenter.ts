@@ -38,7 +38,7 @@ export interface PanePresenter {
   selectionText(): string;
   copySelection(): Promise<boolean>;
   clearSelection(): void;
-  compose(text: string): void;
+  compose(updates: readonly string[], data: string): number;
   paste(text: string): void;
   renderer(): AbyssRenderer;
   dispose(): void;
@@ -279,7 +279,15 @@ export function createPanePresenter(options: PanePresenterOptions): PanePresente
     selectionText: () => selection.text(),
     copySelection: () => selection.copy(),
     clearSelection: () => selection.clear(),
-    compose: (text) => inputBinding.accept(text),
+    // A composition's intermediate states are what the person is still typing; only the committed
+    // text is input. The updates drive the input element so the pane sees the same events a
+    // keyboard produces, and the count is what reached the terminal.
+    compose: (updates, data) => {
+      for (const update of updates) inputBinding.update(update);
+      if (!data) { inputBinding.cancelComposition(); return 0; }
+      inputBinding.commit(data);
+      return 1;
+    },
     paste: (text) => inputBinding.paste(text),
     renderer: () => painter.kind,
     dispose() {

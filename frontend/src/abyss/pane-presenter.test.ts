@@ -106,3 +106,16 @@ describe("a renderer that fails after taking its context", () => {
     }
   });
 });
+
+describe("a driven composition", () => {
+  // The intermediate states of a composition are not input. Only the committed text reaches the
+  // terminal, once, and the caller is told how many times.
+  it("emits the committed text once and reports it", () => {
+    const send = vi.fn();
+    const presenter = createPanePresenter({ root: rootFixture(), send, host: hostFixture(true), createResizeObserver: () => null });
+    const emitted = presenter.compose(["ㅎ", "하", "한"], "한");
+    expect(send.mock.calls.map(([text]) => text)).toEqual(["한"]);
+    expect(emitted).toBe(1);
+    presenter.dispose();
+  });
+});
