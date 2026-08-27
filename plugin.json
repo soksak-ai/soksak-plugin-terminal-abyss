@@ -4,7 +4,7 @@
     "en": "Abyss Terminal",
     "ko": "Abyss \ud130\ubbf8\ub110"
   },
-  "version": "0.0.5",
+  "version": "0.0.6",
   "appVersionRequirement": "0.0.1",
   "description": {
     "en": "A terminal view that paints engine-authoritative screen frames on a canvas.",
@@ -364,27 +364,27 @@
       },
       {
         "id": "soksak-sidecar-terminal-alacritty",
-        "version": "0.0.18"
+        "version": "0.0.19"
       },
       {
         "id": "soksak-sidecar-terminal-ghostty",
-        "version": "0.0.18"
+        "version": "0.0.19"
       },
       {
         "id": "soksak-sidecar-terminal-kitty",
-        "version": "0.0.14"
+        "version": "0.0.15"
       },
       {
         "id": "soksak-sidecar-terminal-shitty",
-        "version": "0.0.13"
+        "version": "0.0.14"
       },
       {
         "id": "soksak-sidecar-terminal-vt100",
-        "version": "0.0.17"
+        "version": "0.0.18"
       },
       {
         "id": "soksak-sidecar-terminal-wezterm",
-        "version": "0.0.17"
+        "version": "0.0.18"
       }
     ]
   }
