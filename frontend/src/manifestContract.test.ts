@@ -9,8 +9,8 @@ describe("terminal plugin manifest contract", () => {
     const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
     expect(manifest.id).toBe("soksak-plugin-terminal-abyss");
     expect(manifest.name).toEqual({ en: "Abyss Terminal", ko: "Abyss 터미널" });
-    expect(manifest.version).toBe("0.0.4");
-    expect(pkg.dependencies["@soksak/soksak-kit-plugin-terminal"]).toBe("0.0.61");
+    expect(manifest.version).toBe("0.0.5");
+    expect(pkg.dependencies["@soksak/soksak-kit-plugin-terminal"]).toBe("0.0.62");
     expect(manifest).not.toHaveProperty("spec");
     expect(manifest.appVersionRequirement).toBe("0.0.1");
     expect(manifest.implements).toEqual([TERMINAL_PLUGIN_CONTRACT]);

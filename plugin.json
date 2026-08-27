@@ -4,7 +4,7 @@
     "en": "Abyss Terminal",
     "ko": "Abyss \ud130\ubbf8\ub110"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "appVersionRequirement": "0.0.1",
   "description": {
     "en": "A terminal view that paints engine-authoritative screen frames on a canvas.",
