@@ -31,7 +31,7 @@ export interface FrameSource {
   read(lines?: number): string;
   invalidateTheme(): void;
   onSelectionInvalid(callback: () => void): () => void;
-  cacheStats(): { storedRows: number; expandedRows: number; expandedCells: number };
+  cacheStats(): { storedRows: number; expandedRows: number; expandedCells: number; expandedCellLimit: number };
 }
 
 interface Row { line: AbyssLine }
@@ -102,11 +102,12 @@ export function createFrameSource(theme: () => AbyssTheme): FrameSource {
     expandedByAbs.clear();
     expandedCells = 0;
   };
+  const expandedCellLimit = () => Math.max(EXPANDED_CELL_CACHE_CAP, cols * rows);
   const rememberExpanded = (abs: number, cells: Cell[]) => {
     forgetExpanded(abs);
     expandedByAbs.set(abs, cells);
     expandedCells += cells.length;
-    while (expandedCells > EXPANDED_CELL_CACHE_CAP && expandedByAbs.size > 1) {
+    while (expandedCells > expandedCellLimit() && expandedByAbs.size > 1) {
       const oldest = expandedByAbs.keys().next().value as number | undefined;
       if (oldest === undefined) break;
       forgetExpanded(oldest);
@@ -196,16 +197,16 @@ export function createFrameSource(theme: () => AbyssTheme): FrameSource {
     // a pane scrolled into history reads that history.
     read(lines) {
       const out: string[] = [];
-      const last = historySize - offset + rows - 1;
-      for (let abs = 0; abs <= last; abs += 1) {
-        const cells = rowCells(abs);
-        if (cells) out.push(textOf(cells));
-        else if (inViewport(abs)) out.push("");
-      }
+      for (let y = 0; y < rows; y += 1) out.push(textOf(rowCells(absOf(y)) ?? blank()));
       return (lines && lines > 0 ? out.slice(-lines) : out).join("\n");
     },
     invalidateTheme() { colors.invalidate(); epoch += 1; clearExpanded(); markAll(); },
     onSelectionInvalid(callback) { selectionInvalid.add(callback); return () => { selectionInvalid.delete(callback); }; },
-    cacheStats: () => ({ storedRows: rowsByAbs.size, expandedRows: expandedByAbs.size, expandedCells }),
+    cacheStats: () => ({
+      storedRows: rowsByAbs.size,
+      expandedRows: expandedByAbs.size,
+      expandedCells,
+      expandedCellLimit: expandedCellLimit(),
+    }),
   };
 }
