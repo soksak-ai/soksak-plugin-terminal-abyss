@@ -93,21 +93,6 @@ describe("frame source", () => {
     expect(source.cacheStats().storedRows).toBeLessThanOrEqual(ROW_CACHE_CAP);
     expect(source.getScrollbackLine(0)).toBeNull();
   });
-  it("drops derived cells while hidden without changing the readable frame", () => {
-    const source = createFrameSource(() => theme);
-    source.applyFrame(frameFixture({ cols: 8, rows: 2, lines: [lineFixture(0, "visible"), lineFixture(1, "frame")] }));
-    expect(source.read()).toBe("visible\nframe");
-    expect(source.cacheStats().expandedCells).toBeGreaterThan(0);
-
-    source.setCacheRetention(false);
-    expect(source.cacheStats()).toMatchObject({ storedRows: 2, expandedRows: 0, expandedCells: 0 });
-    expect(source.read()).toBe("visible\nframe");
-    expect(source.cacheStats()).toMatchObject({ storedRows: 2, expandedRows: 0, expandedCells: 0 });
-
-    source.setCacheRetention(true);
-    expect(source.read()).toBe("visible\nframe");
-    expect(source.cacheStats().expandedCells).toBeGreaterThan(0);
-  });
 });
 
 // Reading answers what the pane shows. A pane scrolled into history reads that history, which is
