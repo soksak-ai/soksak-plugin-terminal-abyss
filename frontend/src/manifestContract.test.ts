@@ -15,6 +15,15 @@ describe("terminal plugin manifest contract", () => {
     expect(manifest.permissions).toContain("ui:statusbar");
     const engines = ["alacritty", "ghostty", "kitty", "shitty", "vt100", "wezterm"];
     expect(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string }) => sidecar.id)).toEqual(["soksak-sidecar-pty", ...engines.map((engine) => `soksak-sidecar-terminal-${engine}`)]);
+    expect(Object.fromEntries(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string; version: string }) => [sidecar.id, sidecar.version]))).toEqual({
+      "soksak-sidecar-pty": "0.0.12",
+      "soksak-sidecar-terminal-alacritty": "0.0.18",
+      "soksak-sidecar-terminal-ghostty": "0.0.18",
+      "soksak-sidecar-terminal-kitty": "0.0.14",
+      "soksak-sidecar-terminal-shitty": "0.0.13",
+      "soksak-sidecar-terminal-vt100": "0.0.17",
+      "soksak-sidecar-terminal-wezterm": "0.0.17",
+    });
     for (const sidecar of manifest.runtimeDependencies.sidecars) expect(sidecar).toEqual({ id: expect.stringMatching(/^soksak-sidecar-[a-z0-9-]+$/), version: expect.stringMatching(/^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/) });
     const setting = (key: string) => manifest.configuration.find((item: { key: string }) => item.key === key);
     expect(setting("engine")).toMatchObject({ type: "enum", enum: engines, default: "alacritty" });
