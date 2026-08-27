@@ -9,7 +9,7 @@ describe("terminal plugin manifest contract", () => {
     const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
     expect(manifest.id).toBe("soksak-plugin-terminal-abyss");
     expect(manifest.name).toEqual({ en: "Abyss Terminal", ko: "Abyss 터미널" });
-    expect(manifest.version).toBe("0.0.6");
+    expect(manifest.version).toBe("0.0.7");
     expect(pkg.dependencies["@soksak/soksak-kit-plugin-terminal"]).toBe("0.0.62");
     expect(manifest).not.toHaveProperty("spec");
     expect(manifest.appVersionRequirement).toBe("0.0.1");
@@ -20,12 +20,12 @@ describe("terminal plugin manifest contract", () => {
     expect(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string }) => sidecar.id)).toEqual(["soksak-sidecar-pty", ...engines.map((engine) => `soksak-sidecar-terminal-${engine}`)]);
     expect(Object.fromEntries(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string; version: string }) => [sidecar.id, sidecar.version]))).toEqual({
       "soksak-sidecar-pty": "0.0.12",
-      "soksak-sidecar-terminal-alacritty": "0.0.19",
-      "soksak-sidecar-terminal-ghostty": "0.0.19",
-      "soksak-sidecar-terminal-kitty": "0.0.15",
-      "soksak-sidecar-terminal-shitty": "0.0.14",
-      "soksak-sidecar-terminal-vt100": "0.0.18",
-      "soksak-sidecar-terminal-wezterm": "0.0.18",
+      "soksak-sidecar-terminal-alacritty": "0.0.20",
+      "soksak-sidecar-terminal-ghostty": "0.0.20",
+      "soksak-sidecar-terminal-kitty": "0.0.16",
+      "soksak-sidecar-terminal-shitty": "0.0.15",
+      "soksak-sidecar-terminal-vt100": "0.0.19",
+      "soksak-sidecar-terminal-wezterm": "0.0.19",
     });
     for (const sidecar of manifest.runtimeDependencies.sidecars) expect(sidecar).toEqual({ id: expect.stringMatching(/^soksak-sidecar-[a-z0-9-]+$/), version: expect.stringMatching(/^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/) });
     const setting = (key: string) => manifest.configuration.find((item: { key: string }) => item.key === key);
