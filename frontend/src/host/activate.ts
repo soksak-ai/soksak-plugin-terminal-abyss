@@ -1,6 +1,7 @@
 import { activateProviderTerminalPlugin, type ProviderTerminalPluginConfig, type ProviderTerminalPluginHost } from "@soksak/soksak-kit-plugin-terminal";
 
 import { sentence } from "./i18n";
+import { manifest } from "../manifest";
 import { createAbyssPresenter, type AbyssApp } from "./presenter";
 
 export const PLUGIN_ID = "soksak-plugin-terminal-abyss";
@@ -31,7 +32,7 @@ export function activate(context: ActivateContext): void {
       sidecars: Object.fromEntries(ENGINES.map((engine) => [engine, `soksak-sidecar-terminal-${engine}`])),
     },
     programId: "terminal-abyss",
-    label: sentence("terminal.label"),
+    label: manifest.name,
     rendererId: "abyss",
     presenter: createAbyssPresenter(app),
     extensions: [

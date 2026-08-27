@@ -1,7 +1,6 @@
 export type Locale = "ko" | "en";
 
 const MESSAGES = {
-  "terminal.label": { en: "Terminal", ko: "터미널" },
   "terminal.param.view": {
     en: "Target view id (omit = the caller's pane, or the only screen open)",
     ko: "대상 뷰 id (생략 = 호출자의 pane, 또는 열려 있는 유일한 화면)",
