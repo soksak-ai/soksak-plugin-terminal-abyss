@@ -12,6 +12,22 @@ function hostFixture(visible: boolean): AbyssHost {
     devicePixelRatio: () => 1, now: () => performance.now(),
   };
 }
+function drivenVisibilityHost(initial: boolean) {
+  let visible = initial;
+  const listeners = new Set<(presentation: { visible: boolean }) => void>();
+  const host: AbyssHost = {
+    ...hostFixture(initial),
+    presentation: () => ({ visible }),
+    onPresentationChange: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+  };
+  return {
+    host,
+    setVisible(next: boolean) {
+      visible = next;
+      for (const listener of listeners) listener({ visible });
+    },
+  };
+}
 function rootFixture() {
   const root = document.createElement("div");
   Object.defineProperty(root, "clientWidth", { value: 700 });
@@ -47,6 +63,35 @@ describe("pane presenter", () => {
     expect(Number(presenter.root.dataset.cacheExpandedRows)).toBeGreaterThanOrEqual(0);
     expect(Number(presenter.root.dataset.cacheExpandedEntries)).toBeLessThanOrEqual(4096);
     expect(presenter.root.dataset.cacheEntryLimit).toBe("4096");
+    presenter.dispose();
+  });
+  it("parks only derived renderer resources and redraws synchronously when shown", () => {
+    const visibility = drivenVisibilityHost(true);
+    const presenter = createPanePresenter({ root: rootFixture(), send: vi.fn(), host: visibility.host, createResizeObserver: () => null });
+    presenter.applyFrame(frameFixture({ cols: 100, rows: 10, lines: [lineFixture(0, "ready")] }));
+    presenter.read();
+    const input = presenter.input;
+    const activeCanvas = presenter.screen;
+    const before = Number(activeCanvas.dataset.renderSequence ?? 0);
+
+    visibility.setVisible(false);
+    expect(presenter.root.dataset.rendererState).toBe("parked");
+    expect(presenter.screen).toBe(activeCanvas);
+    expect(activeCanvas.width).toBe(0);
+    expect(activeCanvas.height).toBe(0);
+    expect(presenter.root.dataset.cacheExpandedEntries).toBe("0");
+    expect(presenter.read()).toContain("ready");
+    expect(presenter.root.dataset.cacheExpandedEntries).toBe("0");
+    expect(presenter.input).toBe(input);
+
+    visibility.setVisible(true);
+    expect(presenter.root.dataset.rendererState).toBe("active");
+    expect(presenter.screen).not.toBe(activeCanvas);
+    expect(presenter.screen.width).toBeGreaterThan(0);
+    expect(presenter.screen.height).toBeGreaterThan(0);
+    expect(Number(presenter.screen.dataset.renderSequence)).toBeGreaterThan(before);
+    expect(presenter.read()).toContain("ready");
+    expect(presenter.input).toBe(input);
     presenter.dispose();
   });
   it("advances the render sequence through a timer when no animation frame runs", () => {
