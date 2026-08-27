@@ -19,13 +19,13 @@ describe("terminal plugin manifest contract", () => {
     const engines = ["alacritty", "ghostty", "kitty", "shitty", "vt100", "wezterm"];
     expect(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string }) => sidecar.id)).toEqual(["soksak-sidecar-pty", ...engines.map((engine) => `soksak-sidecar-terminal-${engine}`)]);
     expect(Object.fromEntries(manifest.runtimeDependencies.sidecars.map((sidecar: { id: string; version: string }) => [sidecar.id, sidecar.version]))).toEqual({
-      "soksak-sidecar-pty": "0.0.12",
-      "soksak-sidecar-terminal-alacritty": "0.0.20",
-      "soksak-sidecar-terminal-ghostty": "0.0.20",
-      "soksak-sidecar-terminal-kitty": "0.0.16",
-      "soksak-sidecar-terminal-shitty": "0.0.15",
-      "soksak-sidecar-terminal-vt100": "0.0.19",
-      "soksak-sidecar-terminal-wezterm": "0.0.19",
+      "soksak-sidecar-pty": "0.0.13",
+      "soksak-sidecar-terminal-alacritty": "0.0.21",
+      "soksak-sidecar-terminal-ghostty": "0.0.21",
+      "soksak-sidecar-terminal-kitty": "0.0.17",
+      "soksak-sidecar-terminal-shitty": "0.0.16",
+      "soksak-sidecar-terminal-vt100": "0.0.20",
+      "soksak-sidecar-terminal-wezterm": "0.0.20",
     });
     for (const sidecar of manifest.runtimeDependencies.sidecars) expect(sidecar).toEqual({ id: expect.stringMatching(/^soksak-sidecar-[a-z0-9-]+$/), version: expect.stringMatching(/^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/) });
     const setting = (key: string) => manifest.configuration.find((item: { key: string }) => item.key === key);
