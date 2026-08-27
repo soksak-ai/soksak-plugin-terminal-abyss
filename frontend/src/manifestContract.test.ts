@@ -6,8 +6,10 @@ import { TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES, validateTerminalPlugin
 describe("terminal plugin manifest contract", () => {
   it("declares every common terminal command, the split surface, and its runtime dependencies", () => {
     const manifest = JSON.parse(readFileSync(join(__dirname, "../../plugin.json"), "utf8"));
+    const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
     expect(manifest.id).toBe("soksak-plugin-terminal-abyss");
     expect(manifest.version).toBe("0.0.1");
+    expect(pkg.dependencies["@soksak/soksak-kit-plugin-terminal"]).toBe("0.0.56");
     expect(manifest).not.toHaveProperty("spec");
     expect(manifest.appVersionRequirement).toBe("0.0.1");
     expect(manifest.implements).toEqual([TERMINAL_PLUGIN_CONTRACT]);
