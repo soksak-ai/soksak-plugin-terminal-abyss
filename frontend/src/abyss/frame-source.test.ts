@@ -55,7 +55,7 @@ describe("frame source", () => {
     expect(source.rowText(0)).toBe("top");
     expect(source.rowText(1)).toBe("bot");
     expect(source.getScrollbackLine(3)?.[0].text).toBe("h");
-    expect(source.read(3)).toBe("h4\ntop\nbot");
+    expect(source.read(3)).toBe("top\nbot");
     expect(invalid).toBe(0);
     source.applyFrame(frameFixture({ historySize: 2, outputSequence: 4 }));
     expect(invalid).toBe(1);
@@ -92,6 +92,25 @@ describe("frame source", () => {
     expect(ROW_CACHE_CAP).toBe(2048);
     expect(source.cacheStats().storedRows).toBeLessThanOrEqual(ROW_CACHE_CAP);
     expect(source.getScrollbackLine(0)).toBeNull();
+  });
+  it("retains one whole large viewport without expanding its rows again", () => {
+    const source = createFrameSource(() => theme);
+    const cols = 300;
+    const rows = 80;
+    source.applyFrame(frameFixture({
+      cols,
+      rows,
+      lines: Array.from({ length: rows }, (_, y) => lineFixture(y, String(y % 10).repeat(cols))),
+    }));
+
+    const first = Array.from({ length: rows }, (_, y) => source.getLine(y));
+    expect(source.cacheStats()).toMatchObject({
+      expandedRows: rows,
+      expandedCells: cols * rows,
+      expandedCellLimit: cols * rows,
+    });
+    const second = Array.from({ length: rows }, (_, y) => source.getLine(y));
+    second.forEach((line, y) => expect(line).toBe(first[y]));
   });
 });
 
